@@ -12,8 +12,7 @@ import org.hibernate.service.ServiceRegistry;
 
 public class DBService {
     private static final String hibernate_show_sql = "true";
-    private static final String hibernate_hbm2ddl_auto = "create";
-    private static final String new_generator_mappings = "false";
+    private static final String hibernate_hbm2ddl_auto = "update";
 
     private final SessionFactory sessionFactory;
 
@@ -21,14 +20,10 @@ public class DBService {
         Configuration configuration = getH2Configuration();
         sessionFactory = createSessionFactory(configuration);
     }
-
-    public void closeSessionFactory() {
-        sessionFactory.close();
-    }
-
     public UsersDataSet getUserByLogin(String login) throws DBException {
         try (Session session = sessionFactory.openSession()) {
             UsersDAO dao = new UsersDAO(session);
+            session.close();
             return dao.getUserByName(login);
         } catch (HibernateException e) {
             throw new DBException(e);
@@ -39,7 +34,9 @@ public class DBService {
             Transaction transaction = session.beginTransaction();
             transaction.commit();
             UsersDAO dao = new UsersDAO(session);
-            return dao.insertUser(login, password);
+            long id = dao.insertUser(login, password);
+            session.close();
+            return id;
         } catch (HibernateException e) {
             throw new DBException(e);
         }
@@ -67,12 +64,12 @@ public class DBService {
     private Configuration getH2Configuration() {
         Configuration configuration = new Configuration();
         configuration.addAnnotatedClass(UsersDataSet.class);
+
         configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
         configuration.setProperty("hibernate.connection.driver_class", "org.h2.Driver");
         configuration.setProperty("hibernate.connection.url", "jdbc:h2:./h2db");
         configuration.setProperty("hibernate.connection.username", "tully");
         configuration.setProperty("hibernate.connection.password", "tully");
-        configuration.setProperty("hibernate.id", new_generator_mappings);
         configuration.setProperty("hibernate.show_sql", hibernate_show_sql);
         configuration.setProperty("hibernate.hbm2ddl.auto", hibernate_hbm2ddl_auto);
         return configuration;

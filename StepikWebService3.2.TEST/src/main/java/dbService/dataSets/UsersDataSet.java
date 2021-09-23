@@ -5,13 +5,18 @@ import java.io.Serializable;
 
 @Entity
 @Table(name = "users")
-public class UsersDataSet implements Serializable {
+public class UsersDataSet implements Serializable, Cloneable {
     private static final long serialVersionUID = -8706689714326132798L;
-
     @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue (strategy = GenerationType.SEQUENCE, generator = "my_table_seq")
+    @SequenceGenerator(name = "my_table_seq", sequenceName = "my_table_seq")
+    @Column (name = "my_table_id", nullable = false)
     private long id;
+//    @Id
+//    @Column(name = "id")
+//    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator="myseq")
+//    @SequenceGenerator(name="users_id_seq", sequenceName="users_id_seq", allocationSize=1)
+//    private long id;
 
     @Column(name = "login", unique = true, updatable = false)
     private String login;
@@ -30,7 +35,7 @@ public class UsersDataSet implements Serializable {
     }
 
     public UsersDataSet(String login, String password) {
-        this.setId(-1);
+        this.setId(id);
         this.setLogin(login);
         this.setPassword(password);
     }
